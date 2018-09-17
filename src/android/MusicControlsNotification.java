@@ -16,7 +16,9 @@ import android.R;
 import android.content.Context;
 import android.app.Activity;
 import android.app.Notification;
+import android.support.v7.app.NotificationCompat;
 import android.app.NotificationManager;
+import android.app.NotificationChannel;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
@@ -25,53 +27,40 @@ import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
 import android.net.Uri;
 
-import android.app.NotificationChannel;
-
 public class MusicControlsNotification {
 	private Activity cordovaActivity;
 	private NotificationManager notificationManager;
-	private Notification.Builder notificationBuilder;
+	private NotificationCompat.Builder notificationBuilder;
 	private int notificationID;
 	private MusicControlsInfos infos;
 	private Bitmap bitmapCover;
-	private String CHANNEL_ID;
+  public static final String ANDROID_CHANNEL_ID = "com.musicblobs.android.AUDIOCONTROLS";
+  public static final String ANDROID_CHANNEL_NAME = "Audio Controls";
 
 	// Public Constructor
 	public MusicControlsNotification(Activity cordovaActivity,int id){
-		this.CHANNEL_ID ="cordova-music-channel-id";
 		this.notificationID = id;
 		this.cordovaActivity = cordovaActivity;
 		Context context = cordovaActivity;
 		this.notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-		// use channelid for Oreo and higher
-		if (Build.VERSION.SDK_INT >= 26) {
-			// The user-visible name of the channel.
-			CharSequence name = "cordova-music-controls-plugin";
-			// The user-visible description of the channel.
-			String description = "cordova-music-controls-plugin notification";
-
-			int importance = NotificationManager.IMPORTANCE_LOW;
-
-			NotificationChannel mChannel = new NotificationChannel(this.CHANNEL_ID, name,importance);
-
-			// Configure the notification channel.
-			mChannel.setDescription(description);
-
-			this.notificationManager.createNotificationChannel(mChannel);
-    }
-
+    createChannel();
 	}
+
+  // Creates initial channel
+  public void createChannel() {
+    NotificationChannel androidChannel = new NotificationChannel(ANDROID_CHANNEL_ID, ANDROID_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+    this.notificationManager.createNotificationChannel(androidChannel);
+  }
 
 	// Show or update notification
 	public void updateNotification(MusicControlsInfos newInfos){
-		// Check if the cover has changed	
+		// Check if the cover has changed
 		if (!newInfos.cover.isEmpty() && (this.infos == null || !newInfos.cover.equals(this.infos.cover))){
 			this.getBitmapCover(newInfos.cover);
 		}
 		this.infos = newInfos;
 		this.createBuilder();
-		Notification noti = this.notificationBuilder.build();
+		NotificationCompat noti = this.notificationBuilder.build();
 		this.notificationManager.notify(this.notificationID, noti);
 	}
 
@@ -79,7 +68,7 @@ public class MusicControlsNotification {
 	public void updateIsPlaying(boolean isPlaying){
 		this.infos.isPlaying=isPlaying;
 		this.createBuilder();
-		Notification noti = this.notificationBuilder.build();
+		NotificationCompat noti = this.notificationBuilder.build();
 		this.notificationManager.notify(this.notificationID, noti);
 	}
 
@@ -87,7 +76,7 @@ public class MusicControlsNotification {
 	public void updateDismissable(boolean dismissable){
 		this.infos.dismissable=dismissable;
 		this.createBuilder();
-		Notification noti = this.notificationBuilder.build();
+		NotificationCompat noti = this.notificationBuilder.build();
 		this.notificationManager.notify(this.notificationID, noti);
 	}
 
@@ -149,15 +138,13 @@ public class MusicControlsNotification {
 
 	private void createBuilder(){
 		Context context = cordovaActivity;
-		Notification.Builder builder = new Notification.Builder(context);
-
-		// use channelid for Oreo and higher
-		if (Build.VERSION.SDK_INT >= 26) {
-			builder.setChannelId(this.CHANNEL_ID);
-		}
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
 
 		//Configure builder
 		builder.setContentTitle(infos.track);
+    builder.setChannelId("com.musicblobs.android.AUDIOCONTROLS")
+    builder.setCategory(NotificationCompat.CATEGORY_STATUS)
+    builder.set
 		if (!infos.artist.isEmpty()){
 			builder.setContentText(infos.artist);
 		}
@@ -175,12 +162,11 @@ public class MusicControlsNotification {
 		if (!infos.ticker.isEmpty()){
 			builder.setTicker(infos.ticker);
 		}
-		
-		builder.setPriority(Notification.PRIORITY_MAX);
+		builder.setPriority(NotificationCompat.PRIORITY_MAX);
 
 		//If 5.0 >= set the controls to be visible on lockscreen
 		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
-			builder.setVisibility(Notification.VISIBILITY_PUBLIC);
+			builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 		}
 
 		//Set SmallIcon
@@ -256,7 +242,7 @@ public class MusicControlsNotification {
 			for (int i = 0; i < nbControls; ++i) {
 				args[i] = i;
 			}
-			builder.setStyle(new Notification.MediaStyle().setShowActionsInCompactView(args));
+			builder.setStyle(new NotificationCompat.MediaStyle().setShowActionsInCompactView(args));
 		}
 		this.notificationBuilder = builder;
 	}
@@ -279,3 +265,4 @@ public class MusicControlsNotification {
 		this.notificationManager.cancel(this.notificationID);
 	}
 }
+
